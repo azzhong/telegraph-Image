@@ -12,52 +12,60 @@ const corsHeaders = {
 
 export const runtime = 'edge';
 export async function POST(request) {
-  // 获取客户端的IP地址
   const { env, cf, ctx } = getRequestContext();
-  // console.log(dd);
+  let page = 0;
   try {
-    let { page, query } = await request.json()
+    const body = await request.json();
+    page = body.page || 0;
+    let query = body.query;
 
-    if (query) {
-      const ps = env.IMG.prepare(`SELECT * FROM imginfo WHERE url LIKE '%${query}%' LIMIT 10 OFFSET ${page} * 10`);
-      const { results } = await ps.all()
-      const total = await env.IMG.prepare(`SELECT COUNT(*) as total FROM imginfo WHERE url LIKE '%${query}%'`).first()
+    if (!env.IMG) {
       return Response.json({
-        "code": 200,
-        "success": true,
-        "message": "success",
-        "data": results,
-        "page": page,
-        "total": total.total
-      });
-    } else {
-      const ps = env.IMG.prepare(`SELECT * FROM imginfo ORDER BY id DESC LIMIT 10 OFFSET ${page} * 10`);
-      const { results } = await ps.all()
-      const total = await env.IMG.prepare(`SELECT COUNT(*) as total FROM imginfo`).first()
-      return Response.json({
-        "code": 200,
-        "success": true,
-        "message": "success",
-        "data": results,
-        "page": page,
-        "total": total.total
+        "code": 500,
+        "success": false,
+        "message": "D1 database binding 'IMG' is missing. Please check your Cloudflare Pages settings.",
+      }, {
+        status: 500,
+        headers: corsHeaders,
       });
     }
 
-
+    if (query) {
+      const ps = env.IMG.prepare(`SELECT * FROM imginfo WHERE url LIKE ? LIMIT 10 OFFSET ?`).bind(`%${query}%`, page * 10);
+      const { results } = await ps.all()
+      const totalResult = await env.IMG.prepare(`SELECT COUNT(*) as total FROM imginfo WHERE url LIKE ?`).bind(`%${query}%`).first()
+      return Response.json({
+        "code": 200,
+        "success": true,
+        "message": "success",
+        "data": results,
+        "page": page,
+        "total": totalResult ? totalResult.total : 0
+      });
+    } else {
+      const ps = env.IMG.prepare(`SELECT * FROM imginfo ORDER BY id DESC LIMIT 10 OFFSET ?`).bind(page * 10);
+      const { results } = await ps.all()
+      const totalResult = await env.IMG.prepare(`SELECT COUNT(*) as total FROM imginfo`).first()
+      return Response.json({
+        "code": 200,
+        "success": true,
+        "message": "success",
+        "data": results,
+        "page": page,
+        "total": totalResult ? totalResult.total : 0
+      });
+    }
   } catch (error) {
-
     return Response.json({
       "code": 500,
       "success": false,
-      "message": error.message,
+      "message": `Database Error: ${error.message}`,
       "data": page,
     }, {
       status: 500,
       headers: corsHeaders,
     })
   }
-
 }
 
 
