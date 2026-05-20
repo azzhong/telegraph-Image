@@ -463,22 +463,15 @@ export default function Home() {
         </Link>
       );
     }
-    switch (Loginuser) {
-      case 'user':
-        return <LoginButton onClick={handleSignOut}>登出</LoginButton>;
-      case 'admin':
-        return (
-          <Link href="/admin">
-            <LoginButton>管理</LoginButton>
-          </Link>
-        );
-      default:
-        return (
-          <Link href="/login">
-            <LoginButton>登录</LoginButton>
-          </Link>
-        );
-    }
+    // 强制仅限 admin 访问后，这里只要是已认证（且通过中间件鉴权），就是 admin
+    return (
+      <div className="flex items-center">
+        <Link href="/admin">
+          <LoginButton>管理</LoginButton>
+        </Link>
+        <LoginButton onClick={handleSignOut}>登出</LoginButton>
+      </div>
+    );
   };
 
 
