@@ -33,9 +33,19 @@ export async function POST(request) {
 	const Referer = request.headers.get('Referer') || "Referer";
 
 	const formData = await request.formData();
-	const fileType = formData.get('file').type;
-	const filename = formData.get('file').name;
 	const file = formData.get('file');
+	const fileType = file.type;
+	const originalFilename = file.name;
+
+	// 生成文件内容的 Hash 作为文件名，保留原后缀
+	const arrayBuffer = await file.arrayBuffer();
+	const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+	const lastDotIndex = originalFilename.lastIndexOf('.');
+	const extension = lastDotIndex !== -1 ? originalFilename.substring(lastDotIndex) : '';
+	const filename = `${hashHex}${extension}`;
 
 	const header = new Headers()
 	header.set("content-type", fileType)

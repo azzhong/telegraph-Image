@@ -186,10 +186,15 @@ export default function Home() {
             const result = await response.json();
             // console.log(result);
 
-            file.url = result.url;
+            // 创建一个新的对象，包含服务器返回的 URL 和文件名
+            const uploadedFile = {
+              name: result.name || file.name,
+              url: result.url,
+              type: file.type
+            };
 
             // 更新 uploadedImages 和 selectedFiles
-            setUploadedImages((prevImages) => [...prevImages, file]);
+            setUploadedImages((prevImages) => [...prevImages, uploadedFile]);
             setSelectedFiles((prevFiles) => prevFiles.filter(f => f !== file));
             successCount++;
           } else {

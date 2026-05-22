@@ -43,10 +43,11 @@ export async function POST(request) {
     })
 
     const resdata = await res.json()
+    const fileName = resdata[0]?.src ? resdata[0].src.split('/').pop() : resdata.src ? resdata.src.split('/').pop() : "image";
     let data = {
-      "url": `${customDomain}${resdata.src}`,
+      "url": `${customDomain}${resdata[0]?.src || resdata.src}`,
       "code": 200,
-      "name": resdata.src
+      "name": fileName
     }
 
 
